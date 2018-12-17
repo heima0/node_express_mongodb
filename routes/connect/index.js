@@ -3,7 +3,7 @@ const assert = require('assert');
 
 const connect = function(callback){
   // Connection URL
-  const url = 'mongodb://localhost:27017';
+  const url = 'http://0.0.0.0:27017';
    
   // Database Name
   const dbName = '1726a';
