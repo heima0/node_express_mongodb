@@ -5,7 +5,7 @@ var classify = require('./handler/classify')
 /* GET home page. */
 // 页面配置路由
 router.get('/', function(req, res, next) {
-  res.render('index', { title: '社区' });
+  res.render('index', { title: '社区论坛' });
 });
 
 router.get('/register', function(req, res, next) {
