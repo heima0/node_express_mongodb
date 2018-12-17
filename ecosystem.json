@@ -1,0 +1,25 @@
+{
+  "apps":[
+    {
+      "name"      : "node_express_mongodb",
+      "script"    : "./bin/www",
+      "env": {
+        "COMMON_VARIABLE": "true"
+      },
+      "env_production" : {
+        "NODE_ENV": "production"
+      }
+    }
+  ],
+  "deploy" : {
+    "production" : {
+      "user" : "yishi",
+      "key": "/Users/huanqiu/.ssh/id_rsa_yishi",
+      "host" : "47.75.210.58",
+      "ref"  : "origin/master",
+      "repo" : "git@github.com:heima0/node_express_mongodb.git",
+      "path" : "/home/node/www/production",
+      "post-deploy": "npm install && pm2 startOrRestart ecosystem.json --env production"
+    }
+  }
+}
