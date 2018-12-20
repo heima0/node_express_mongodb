@@ -226,6 +226,7 @@
 
   // 分页
   function showPagination(data){
+    $('span.active').click()
     data.totalData = data.totalData?data.totalData:1;
     $('.M-box1').pagination({
         totalData: data.totalData,
