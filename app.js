@@ -41,3 +41,12 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+
+const url = 'http://0.0.0.0:27017';
+
+
+
+
+
+
+

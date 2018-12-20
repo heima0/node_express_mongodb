@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/css/bootstrap.min.css' />
+    <link rel='stylesheet' href='/css/message.css' />
+  </head>
+  <body>
+    <style type="text/css"> 
+      .sort{
+        margin-bottom: 10px;
+        clear: both;
+        overflow: hidden;
+      }
+      .fl{
+        float: left;
+      }
+      .fr{
+        float: right;
+      }
+      .glyphicon{
+        cursor: pointer;
+      }
+      span.current{
+        cursor: default;
+      }
+      h2{
+        margin-bottom: 20px;
+        line-height: 40px;
+        text-align: center;
+      }
+      .container{
+        background: #F9F9FA;
+        padding-bottom: 50px;
+        border-radius: 10px;
+      }
+      .container p{
+        text-indent: 2em;
+      }
+      .info{
+        line-height: 40px;
+        font-weight: 700;
+      }
+      
+    </style>
+
+    <!-- 导航 -->
+
+    <% include ./header/index.ejs %>
+    
+    <section class="container">
+      <h2><%= detail.title %></h2>
+      <div class="info">
+        发布时间：<time><%= detail.time %></time>
+      </div>
+      <div class="content">
+        <%- detail.content %>
+      </div>
+      <div class="info fr">
+        作者：<time><%= detail.author %></time>
+      </div>
+    </section>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/message.min.js"></script>
+  </body>
+</html>
+<script type="text/javascript">
+  // 请求数据
+  function ajaxList(){
+    $.ajax({
+      url: '/api/v1/commitList?page='+page+'&perpage='+perpage+'&time='+time+'&classify='+classify,
+      type: 'get',
+    })
+    .done(function(result) {
+      if(result.err === 200){
+        // 渲染列表
+        let html = '';
+        $.each(result.data, function(i,v){
+          html += '<tr>'
+          +'<th scope="row">'+ ((page-1)*perpage+i+1) +'</th>'
+          +'<td>'+ v.author +'</td>'
+          +'<td><a target="_blank" href="/detail?id='+ v._id +'">'+ v.title +'</a></td>'
+          +'<td>'+ v.time.split(' ')[0] +'</td>'
+          if($.cookie('mongo_info') && JSON.parse($.cookie('mongo_info'))._id === v.author_id){
+           html += '<td><span data-id="'+ v._id +'" class="glyphicon current" aria-hidden="true"> '+ v.hot +'</span></td>'
+          }else{
+           html += '<td><span data-id="'+ v._id +'" class="glyphicon glyphicon-thumbs-up" aria-hidden="true"> '+ v.hot +'</span></td>'
+          }
+          +'</tr>'
+        })
+        $('tbody').html(html)
+      }
+      console.log(result);
+      // $.message('服务器繁忙，请稍后再试')
+    })
+    .fail(function() {
+      console.log("error");
+    })
+    .always(function() {
+      console.log("complete");
+    });
+  }
+  
+  
+
+</script>
+

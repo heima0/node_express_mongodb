@@ -4,6 +4,8 @@ var connect = require('../connect');
 const commit = function(req, res, next) {
   // 1.获取前端发送的数据
   let info = req.body;
+
+  info.hot = info.hot - 0
   // { title: '测试专题1',
   // content: '<p>测试内容</p>',
   // author: '霸天',

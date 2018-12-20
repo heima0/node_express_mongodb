@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/css/bootstrap.min.css' />
+    <link rel='stylesheet' href='/css/message.css' />
+    <link rel='stylesheet' href='/css/pagination.css' />
+  </head>
+  <body>
+    <style type="text/css"> 
+      .sort{
+        margin-bottom: 10px;
+        clear: both;
+        overflow: hidden;
+      }
+      .fl{
+        float: left;
+      }
+      .fr{
+        float: right;
+      }
+      .glyphicon{
+        cursor: pointer;
+      }
+      span.current{
+        cursor: default;
+      }
+      
+    </style>
+
+    <!-- 导航 -->
+
+    <% include ./header/index.ejs %>
+    
+    <section class="container">
+      <div class="sort">
+        <div class="fl">
+          <p>筛选：</p>
+          <button type="button" class="btn btn-default btn-success">全部</button>
+          <button type="button" class="btn btn-default">科技</button>
+          <button type="button" class="btn btn-default">自然</button>
+          <button type="button" class="btn btn-default">动物</button>
+          <button type="button" class="btn btn-default">情感</button>
+        </div>
+        <div class="fr">
+          <p>排序：</p>
+          <button type="button" data-id="-1" class="btn btn-default btn-success">正序</button>
+          <button type="button" data-id="1" class="btn btn-default">倒序</button>
+        </div>
+      </div>
+      <table class="table table-hover table-bordered">
+        <thead>
+          <tr class="info">
+            <th>序号</th>
+            <th>用户</th>
+            <th>标题</th>
+            <th>时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <div class="m-style M-box1">
+      </div>
+    </section>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.pagination.js"></script>
+    <script type="text/javascript" src="/js/message.min.js"></script>
+  </body>
+</html>
+<script type="text/javascript">
+  // 请求数据
+  var page = 1;
+  var perpage = 10;
+  var time = -1; 
+  var classify = 'all';
+
+  init();
+
+  function init(){
+    ajaxList(function(result){
+      showPagination(result);
+    });
+  }
+  
+  function ajaxList(callback){
+    $.ajax({
+      url: '/api/v1/commitList?page='+page+'&perpage='+perpage+'&time='+time+'&classify='+classify,
+      type: 'get',
+    })
+    .done(function(result) {
+      if(result.err === 200){
+        // 渲染列表
+        let html = '';
+        $.each(result.data, function(i,v){
+          html += '<tr>'
+          +'<th scope="row">'+ ((page-1)*perpage+i+1) +'</th>'
+          +'<td>'+ v.author +'</td>'
+          +'<td><a target="_blank" href="/article?id='+ v._id +'">'+ v.title +'</a></td>'
+          +'<td>'+ v.time.split(' ')[0] +'</td>'
+          if($.cookie('mongo_info') && JSON.parse($.cookie('mongo_info'))._id === v.author_id){
+           html += '<td><span data-id="'+ v._id +'" class="glyphicon current" aria-hidden="true"> '+ v.hot +'</span></td>'
+          }else{
+           html += '<td><span data-id="'+ v._id +'" class="glyphicon glyphicon-thumbs-up" aria-hidden="true"> '+ v.hot +'</span></td>'
+          }
+          +'</tr>'
+        })
+        $('tbody').html(html);
+        // 实例化分页
+        if(callback){
+          callback(result)
+        }
+      }
+      console.log(result);
+      // $.message('服务器繁忙，请稍后再试')
+    })
+    .fail(function() {
+      console.log("error");
+    })
+    .always(function() {
+      console.log("complete");
+    });
+  }
+  
+  // 排序
+  $('.sort .fr').on('click', 'button', function(){
+    $(this).siblings('button').removeClass('btn-success').end().addClass('btn-success')
+    time = $(this).data('id')
+    ajaxList()
+  })
+  // 分类
+  $('.sort .fl').on('click', 'button', function(){
+    $(this).siblings('button').removeClass('btn-success').end().addClass('btn-success')
+    classify = $(this).text();
+    init();
+  })
+  // 点赞
+  $('tbody').on('click', '.glyphicon', function(){
+    // 判断是否登录
+    if(!checkUser()){
+      return false;
+    }
+    // 如果有类名，点过了，不让点了
+    if($(this).hasClass('btn-primary')) return false;
+    // 获取文章id
+    let id = $(this).data('id')  
+    // 点赞请求
+    $.ajax({
+      url:'/api/v1/hot',
+      type:'get',
+      data:{id:id},
+      success:  (result) => {
+        console.log(result)
+        // 如果点赞成功，更改点赞按钮的颜色和点赞数
+        if(result.err === 200){
+          $(this).text($(this).text()-0+1).addClass('btn-primary')
+        }else{
+          $.message('服务器繁忙，请稍后再试')
+        }
+      }
+    })
+  })
+
+  // 提交事件
+  $('form').submit(submit);
+  function submit(event) {
+    // 需要再次判断是否登录，以免用户自己注销
+    checkUser();
+    console.log($.cookie('mongo_info'))
+    event.preventDefault();
+    let info = {};
+    info.title = $.trim($('#title').val());
+    info.content = editor.txt.html();
+    info.author = JSON.parse($.cookie('mongo_info')).nickname;
+    info.author_id = JSON.parse($.cookie('mongo_info'))._id;
+    info.hot = 0;
+    info.time = new Date().toLocaleString();
+    info.classify = $('.classify').find('button.btn-primary').text();
+    console.log(info);
+
+    // 验证内容是否为空
+    if(info.title !== '' &&  $.trim(editor.txt.text()) !== ''){
+      // 禁止重复提交
+      $('[type="submit"]').attr('disabled', 'disabled')
+      // 将信息发送给后台 title，content，author, author_id, hot,classify,time
+      $.ajax({
+        url: '/api/v1/commit',
+        type: 'post',
+        data: info,
+      })
+      .done(function(result) {
+        console.log(result);
+        if(result.err == 200){
+          $.message('提交成功');
+          setTimeout(function(){
+            window.location.href = '/';
+          }, 2000)
+        }else{
+          $.message('服务器繁忙，请稍后再试')
+        }
+      })
+      .fail(function() {
+        console.log("error");
+      })
+      .always(function() {
+        console.log("complete");
+      });
+    }else{
+      $.message({message: '请完善您的帖子信息', type: 'warning'})
+    }
+  }
+
+  function checkUser(){
+    if($.cookie('mongo_info')){
+      return true;
+    }else{
+      $.message('请登录后操作');
+      // setTimeout(function(){
+      //   window.location.href = '/login';
+      // }, 2500)
+      return false;
+    }
+  }
+
+  // 分页
+  function showPagination(data){
+    $('.M-box1').pagination({
+        totalData: data.totalData,
+        showData: perpage,
+        count: 2,
+        coping: true,
+        callback: function(api){
+          console.log(api.getCurrent())
+          page = api.getCurrent();
+          ajaxList();
+        }
+    });
+  }
+  
+</script>
+
