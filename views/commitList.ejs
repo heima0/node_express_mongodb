@@ -23,8 +23,17 @@
       .glyphicon{
         cursor: pointer;
       }
+      .jump-ipt, .jump-btn{
+        display: none;
+      }
       span.current{
         cursor: default;
+      }
+      @media screen and (max-width: 450px){
+        .sort .fr{
+            float: left;
+            margin-top: 10px;
+        }
       }
       
     </style>
@@ -169,7 +178,6 @@
   function submit(event) {
     // 需要再次判断是否登录，以免用户自己注销
     checkUser();
-    console.log($.cookie('mongo_info'))
     event.preventDefault();
     let info = {};
     info.title = $.trim($('#title').val());
@@ -179,7 +187,6 @@
     info.hot = 0;
     info.time = new Date().toLocaleString();
     info.classify = $('.classify').find('button.btn-primary').text();
-    console.log(info);
 
     // 验证内容是否为空
     if(info.title !== '' &&  $.trim(editor.txt.text()) !== ''){
@@ -227,18 +234,22 @@
 
   // 分页
   function showPagination(data){
-    $('span.active').click()
-    data.totalData = data.totalData?data.totalData:1;
     $('.M-box1').pagination({
         totalData: data.totalData,
         showData: perpage,
         count: 2,
+        jump: true,
         coping: true,
         callback: function(api){
-          console.log(api.getCurrent())
-          page = api.getCurrent();
+          page = api.getCurrent();    // 问题出在这里应该
           ajaxList();
         }
+    }, function(api) {
+        //  如果少于1页，隐藏
+        if(data.totalData <= perpage){
+          $('.M-box1').hide();
+        }
+        $('.jump-ipt').val(1).siblings('.jump-btn').click();
     });
   }
   
